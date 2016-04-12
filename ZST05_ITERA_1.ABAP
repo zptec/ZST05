@@ -1,0 +1,142 @@
+REPORT ZST05_ITERA_1.
+
+* We use some parameters to dynamically control the select, this is not very
+* clever but this is just a test program !!
+PARAMETER : p_tabnam TYPE tabname DEFAULT 'SFLIGHT',
+ p_selfl1 TYPE edpline DEFAULT 'CARRID',
+ p_selfl2 TYPE edpline DEFAULT 'CONNID',
+ p_selfl3 TYPE edpline DEFAULT 'FLDATE',
+ p_selfl4 TYPE edpline DEFAULT 'PRICE',
+ p_selfl5 TYPE edpline DEFAULT 'CURRENCY',
+ p_where1 TYPE edpline DEFAULT 'PRICE > 300',
+ p_where2 TYPE edpline DEFAULT 'AND CURRENCY = ''EUR'''.
+
+FIELD-SYMBOLS : <LT_OUTTAB> TYPE ANY TABLE,
+ <LS_OUTTAB> TYPE ANY,
+ <L_FLD> TYPE ANY.
+
+DATA: LT_WHERE TYPE TABLE OF EDPLINE,
+ LT_SEL_LIST TYPE TABLE OF EDPLINE,
+ LT_GROUP TYPE TABLE OF EDPLINE,
+ L_HAVING TYPE STRING,
+ L_WA_NAME TYPE STRING,
+ L_SEL_LIST TYPE EDPLINE,
+ DREF TYPE REF TO DATA,
+ ITAB_TYPE TYPE REF TO CL_ABAP_TABLEDESCR,
+ STRUCT_TYPE TYPE REF TO CL_ABAP_STRUCTDESCR,
+ ELEM_TYPE TYPE REF TO CL_ABAP_ELEMDESCR,
+ COMP_TAB TYPE CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE,
+
+ COMP_FLD TYPE CL_ABAP_STRUCTDESCR=>COMPONENT.
+
+TYPES: F_COUNT TYPE I.
+
+* Creation of the output table including a non standard field, f_count
+* see ABAP FAQ #14 for more information on this topic
+STRUCT_TYPE ?= CL_ABAP_TYPEDESCR=>DESCRIBE_BY_NAME( P_TABNAM ).
+ELEM_TYPE ?= CL_ABAP_ELEMDESCR=>DESCRIBE_BY_NAME( 'F_COUNT' ).
+COMP_TAB = STRUCT_TYPE->GET_COMPONENTS( ).
+
+* We remove the unnecessary fields
+LOOP AT COMP_TAB INTO COMP_FLD.
+ IF COMP_FLD-NAME <> P_SELFL1 AND
+ COMP_FLD-NAME <> P_SELFL2 AND
+ COMP_FLD-NAME <> P_SELFL3 AND
+ COMP_FLD-NAME <> P_SELFL4 AND
+ COMP_FLD-NAME <> P_SELFL5.
+ DELETE TABLE COMP_TAB WITH TABLE KEY NAME = COMP_FLD-NAME.
+ ENDIF.
+ENDLOOP.
+
+COMP_FLD-NAME = 'F_COUNT'.
+COMP_FLD-TYPE = ELEM_TYPE.
+APPEND COMP_FLD TO COMP_TAB.
+
+STRUCT_TYPE = CL_ABAP_STRUCTDESCR=>CREATE( COMP_TAB ).
+ITAB_TYPE = CL_ABAP_TABLEDESCR=>CREATE( STRUCT_TYPE ).
+
+l_wa_name = 'l_WA'.
+CREATE DATA dref TYPE HANDLE itab_type.
+ASSIGN dref->* TO <lt_outtab>.
+CREATE DATA dref TYPE HANDLE struct_type.
+ASSIGN dref->* TO <ls_outtab>.
+
+* Creation of the selection fields and the "group by" clause
+IF P_SELFL1 IS NOT INITIAL.
+  APPEND P_SELFL1 TO LT_SEL_LIST.
+  APPEND P_SELFL1 TO LT_GROUP.
+ENDIF.
+IF P_SELFL2 IS NOT INITIAL.
+  APPEND P_SELFL2 TO LT_SEL_LIST.
+  APPEND P_SELFL2 TO LT_GROUP.
+ENDIF.
+IF P_SELFL3 IS NOT INITIAL.
+  APPEND P_SELFL3 TO LT_SEL_LIST.
+  APPEND P_SELFL3 TO LT_GROUP.
+ENDIF.
+IF P_SELFL4 IS NOT INITIAL.
+  APPEND P_SELFL4 TO LT_SEL_LIST.
+  APPEND P_SELFL4 TO LT_GROUP.
+ENDIF.
+IF P_SELFL5 IS NOT INITIAL.
+  APPEND P_SELFL5 TO LT_SEL_LIST.
+  APPEND P_SELFL5 TO LT_GROUP.
+ENDIF.
+APPEND 'COUNT(*) AS F_COUNT' TO lt_sel_list.
+
+* creation of the "where" clause
+IF P_WHERE1 IS NOT INITIAL.
+  APPEND P_WHERE1 TO LT_WHERE.
+ENDIF.
+IF P_WHERE2 IS NOT INITIAL.
+  APPEND P_WHERE2 TO LT_WHERE.
+ENDIF.
+
+* Creation of the "having" clause
+L_HAVING = 'COUNT(*) >= 1'.
+
+* THE dynamic select
+SELECT (lt_sel_list)
+ FROM (p_tabnam)
+ INTO CORRESPONDING FIELDS OF TABLE <lt_outtab>
+ WHERE (lt_where)
+ GROUP BY (lt_group)
+ HAVING (l_having)
+ ORDER BY (lt_group).
+
+* display of header
+  LOOP AT COMP_TAB INTO COMP_FLD.
+   WRITE: COMP_FLD-NAME, '', ''.
+  ENDLOOP.
+  SKIP.
+* display of the results
+LOOP AT <LT_OUTTAB> ASSIGNING <LS_OUTTAB>.
+ LOOP AT COMP_TAB INTO COMP_FLD.
+ ASSIGN COMPONENT COMP_FLD-NAME OF STRUCTURE <LS_OUTTAB> TO <L_FLD>.
+* WRITE: <L_FLD> UNDER COMP_FLD-NAME.
+ WRITE: <L_FLD>.
+ ENDLOOP.
+ SKIP.
+ENDLOOP.
+*
+*DATA: x TYPE i,
+*      y TYPE i,
+*      l TYPE i.
+*
+*DEFINE write_frame.
+*  x = sy-colno. y = sy-linno.
+*  WRITE: '|' NO-GAP, &1 NO-GAP, '|' NO-GAP.
+*  l = sy-colno - x.
+*  y = y - 1. SKIP TO LINE y.
+*  ULINE AT x(l).
+*  y = y + 2. SKIP TO LINE y.
+*  ULINE AT x(l).
+*  y = y - 1. x = sy-colno. SKIP TO LINE y. POSITION x.
+*END-OF-DEFINITION.
+*
+*SKIP.
+*WRITE       'Demonstrating'.
+*write_frame 'dynamic frames'.
+*WRITE       'in'.
+*write_frame 'ABAP'.
+*WRITE       'output lists.'. .
