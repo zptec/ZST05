@@ -1,2 +1,2 @@
 # ZST05
-A improved ST05 Performance Trace Tool.
+An improved ST05 Performance Trace Tool.
