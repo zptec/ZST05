@@ -1,16 +1,12 @@
 ENHANCEMENT 1  ZTMPTB_I03.    "active version
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""$"$\SE:(2) Class CL_PTC_C_ALV, Method CALL_VIEW, Start, Enhancement ZTMPTB_I03, Start                                                                        A
 *ST05 APPENDING FIELD —— boris town
 *SYSTEM VERSION: EHP3 FOR SAP CRM 7.0
 *ENHANCEMENT-POINT CL_PTC_C_ALV=>CALL_VIEW
   IF SY-UNAME EQ 'HANDTB'.
     IF STRUCTURE_NAME EQ 'ST05_RECORD_DISP'.
-      TYPES BEGIN OF LTY_ZTMPTB_MAIN_RECORD.
-        INCLUDE TYPE ST05_MAIN_RECORD.
-      TYPES: ZZREMARK01 TYPE CHAR255,
-             ZZREMARK02 TYPE CHAR255,
-      END OF LTY_ZTMPTB_MAIN_RECORD.
-      DATA LT_ZTMPTB_MAIN_RECORD TYPE TABLE OF LTY_ZTMPTB_MAIN_RECORD.
-      DATA LS_ZTMPTB_MAIN_RECORD TYPE LTY_ZTMPTB_MAIN_RECORD.
+      DATA LT_ZTMPTB_MAIN_RECORD TYPE TABLE OF ZTMPTB_MAIN_RECORD.
+      DATA LS_ZTMPTB_MAIN_RECORD TYPE ZTMPTB_MAIN_RECORD.
       DATA LT_ZTMPTB_MAIN_RECORD_OLD TYPE TABLE OF ST05_MAIN_RECORD.
       DATA LS_ZTMPTB_MAIN_RECORD_OLD TYPE ST05_MAIN_RECORD.
 *      FIELD-SYMBOLS <FS_ZTMPTB_DATATAB> TYPE ANY TABLE.
@@ -75,4 +71,6 @@ ENHANCEMENT 1  ZTMPTB_I03.    "active version
       RETURN.
     ENDIF.
   ENDIF.
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""$"$\SE:(3) Class CL_PTC_C_ALV, Method CALL_VIEW, Start, Enhancement ZTMPTB_I03, End                                                                          A
 ENDENHANCEMENT.
