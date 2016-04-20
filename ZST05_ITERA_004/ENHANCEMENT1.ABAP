@@ -1,12 +1,13 @@
 ENHANCEMENT 1  ZTMPTB_I03.    "active version
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""$"$\SE:(2) Class CL_PTC_C_ALV, Method CALL_VIEW, Start, Enhancement ZTMPTB_I03, Start                                                                        A
 *ST05 GET SELECTION RESULT —— boris town
 *SYSTEM VERSION: EHP3 FOR SAP CRM 7.0
 *ENHANCEMENT-POINT CL_PTC_C_ALV=>CALL_VIEW
   IF SY-UNAME EQ 'HANDTB'.
-    IF STRUCTURE_NAME EQ 'ST05_RECORD_DISP'.
+    DATA: ZTMPTB_DESCR_REF TYPE REF TO CL_ABAP_TYPEDESCR.
+    ZTMPTB_DESCR_REF = CL_ABAP_TYPEDESCR=>DESCRIBE_BY_DATA( data ).
+    IF STRUCTURE_NAME EQ 'ST05_RECORD_DISP'
+      AND ZTMPTB_DESCR_REF->ABSOLUTE_NAME EQ '\TYPE=ST05_MAIN_RECORD_TABLE'.
       DATA LT_ZTMPTB_MAIN_RECORD TYPE TABLE OF ZTMPTB_MAIN_RECORD.
-
       "CALL TABLE RALATION ANALYZER
       CALL FUNCTION 'ZTMPTB_TABLE_RALATION'
        TABLES
@@ -63,5 +64,4 @@ ENHANCEMENT 1  ZTMPTB_I03.    "active version
     ENDIF.
   ENDIF.
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""$"$\SE:(3) Class CL_PTC_C_ALV, Method CALL_VIEW, Start, Enhancement ZTMPTB_I03, End                                                                          A
 ENDENHANCEMENT.
