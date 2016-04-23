@@ -1,0 +1,85 @@
+FUNCTION ZTMPTB_RESTORE_SQL.
+*"----------------------------------------------------------------------
+*"*"本地接口：
+*"  IMPORTING
+*"     REFERENCE(IV_STATEMENT)
+*"     REFERENCE(IV_VARIABLES)
+*"  EXPORTING
+*"     REFERENCE(EV_SQL)
+*"  EXCEPTIONS
+*"      REMARKS_NOT_MATCH
+*"----------------------------------------------------------------------
+
+"&---------------------------------------
+"& ZST05_I04:/ Restore SQL statement
+"& Boris Town
+"&---------------------------------------
+"& Sample Input:
+"& SELECT DISTINCT  "ENHNAME" FROM "ENHOBJ" WHERE "OBJ_TYPE" = ? AND "OBJ_NAME" = ? AND "STATE" <> ? AND "ELEMUSAGE" IN ( ? , ? , ? )
+"& CH&4&CLAS&CH&120&CL_PTC_C_ALV                                                                                                            &CH&1&R&CH&4&EXTO&CH&4&RDEF&CH&4&REDO&
+"& Sample Output:
+"& SELECT DISTINCT "ENHNAME" FROM "ENHOBJ" WHERE "OBJ_TYPE" = "CLAS" AND "OBJ_NAME" = "CL_PTC_C_ALV" AND "STATE" <> "R" AND "ELEMUSAGE" IN ( "EXTO" , "RDEF" , "REDO" )
+"&---------------------------------------
+
+"&---------------------------------------
+"& 1 Split Variables String
+"&---------------------------------------
+DATA LT_VARIABLE_STRINGS TYPE TABLE OF STRING.
+SPLIT IV_VARIABLES AT '&' INTO TABLE LT_VARIABLE_STRINGS.
+"&---------------------------------------
+"& 2 Get each varible
+"&---------------------------------------
+DATA LT_VARIABLE_STRING TYPE STRING.
+DATA LT_EACH_VARIABLE TYPE TABLE OF STRING.
+DATA L_TABIX TYPE I.
+DATA L_MOD3 TYPE I.
+CLEAR L_TABIX.
+LOOP AT LT_VARIABLE_STRINGS INTO LT_VARIABLE_STRING.
+  ADD 1 TO L_TABIX.
+  L_MOD3 = L_TABIX MOD 3.
+  IF L_MOD3 EQ 0.
+    CONCATENATE '"' LT_VARIABLE_STRING '"'  INTO LT_VARIABLE_STRING.
+    CONDENSE LT_VARIABLE_STRING.
+    APPEND LT_VARIABLE_STRING TO LT_EACH_VARIABLE.
+  ENDIF.
+ENDLOOP.
+"&---------------------------------------
+"& 3 Search for all question mark in statement
+"&---------------------------------------
+DATA: STATEMENT_MARKS TYPE match_result_tab.
+FIND ALL OCCURRENCES OF '?' IN IV_STATEMENT RESULTS STATEMENT_MARKS.
+
+"&---------------------------------------
+"& 4 Put variable into question mark
+"&---------------------------------------
+DATA L_LAST_OFFSET TYPE I.
+DATA L_STRLEN TYPE I.
+DATA L_SEGMENT_LENGTH TYPE I.
+DATA: STATEMENT_MARK TYPE MATCH_RESULT.
+CLEAR L_LAST_OFFSET.
+L_STRLEN = STRLEN( IV_STATEMENT ).
+LOOP AT STATEMENT_MARKS INTO STATEMENT_MARK.
+  L_TABIX  = SY-TABIX.
+  L_SEGMENT_LENGTH = STATEMENT_MARK-OFFSET - L_LAST_OFFSET.
+  CONCATENATE EV_SQL IV_STATEMENT+L_LAST_OFFSET(L_SEGMENT_LENGTH)
+  INTO EV_SQL SEPARATED BY SPACE.
+  READ TABLE LT_EACH_VARIABLE INTO LT_VARIABLE_STRING INDEX L_TABIX.
+  IF SY-SUBRC NE 0.
+    RAISE REMARKS_NOT_MATCH.
+    "Question Marks & Variables not match
+  ENDIF.
+  CONCATENATE EV_SQL LT_VARIABLE_STRING INTO EV_SQL SEPARATED BY SPACE.
+  L_LAST_OFFSET = STATEMENT_MARK-OFFSET + STATEMENT_MARK-LENGTH.
+"&---------------------------------------
+"& 5 Get Next Question mark
+"&---------------------------------------
+ENDLOOP.
+
+"&---------------------------------------
+"& 6 Generate Full statement
+"&---------------------------------------
+L_SEGMENT_LENGTH = L_STRLEN - L_LAST_OFFSET.
+CONCATENATE EV_SQL IV_STATEMENT+L_LAST_OFFSET(L_SEGMENT_LENGTH) INTO EV_SQL.
+CONDENSE EV_SQL.
+
+ENDFUNCTION.
