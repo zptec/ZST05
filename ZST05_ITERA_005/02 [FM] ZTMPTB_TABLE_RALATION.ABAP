@@ -19,8 +19,7 @@ FUNCTION ZTMPTB_TABLE_RALATION.
   DATA LT_ZTMPTB_MAIN_RECORD_OLD TYPE TABLE OF ST05_MAIN_RECORD.
   DATA: LS_ZTMPTB_MAIN_RECORD_OLD TYPE ST05_MAIN_RECORD,
         LR_RESULT_DESCR  TYPE REF TO CL_ABAP_STRUCTDESCR,
-        lr_result        TYPE REF TO data.
-
+        LR_RESULT        TYPE REF TO DATA.
   CREATE OBJECT REF_SQL_EXECUTOR.
 
   REF_SYSTEM = CL_DB6_SYS=>GET_SYS_REF( SYSTEM_ID     = SY-SYSID
@@ -46,8 +45,8 @@ FUNCTION ZTMPTB_TABLE_RALATION.
           REMARKS_NOT_MATCH       = 1
           OTHERS                  = 2
                 .
-      IF SY-SUBRC <> 0.
-
+      IF SY-SUBRC EQ 0.
+        "EXECUTE QUERY
         REF_SQL_EXECUTOR->EXEC_QUERY_DYN( EXPORTING IM_STATEMENT    = L_SQL
                                                 IM_CURSOR_SIZE  = '250'
                                                 IM_SYSTEM       = REF_SYSTEM
@@ -55,7 +54,46 @@ FUNCTION ZTMPTB_TABLE_RALATION.
                                                 IM_LOGGING      = ABAP_TRUE
                                       IMPORTING EX_STRUCTDESCR  = LR_RESULT_DESCR
                                                 EX_RESULT_REF   = LR_RESULT ).
-        LS_ZTMPTB_MAIN_RECORD-ZZREMARK01 = 'X'.
+"&---------------------------------------
+"& 5 Create receipt structure
+"&---------------------------------------
+        FIELD-SYMBOLS <LT_OUTTAB> TYPE STANDARD TABLE.
+        FIELD-SYMBOLS <LS_OUTTAB> TYPE ANY.
+        DATA LR_RESULT_LINE TYPE REF TO DATA.
+        DATA LT_COMP_TAB TYPE CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE.
+        DATA LS_COMP_FLD TYPE CL_ABAP_STRUCTDESCR=>COMPONENT.
+
+        UNASSIGN: <LT_OUTTAB>, <LS_OUTTAB>.
+
+        CREATE DATA LR_RESULT_LINE TYPE HANDLE LR_RESULT_DESCR.
+        ASSIGN LR_RESULT_LINE->* TO <LS_OUTTAB>.
+
+        CLEAR LT_COMP_TAB.
+        LT_COMP_TAB = LR_RESULT_DESCR->GET_COMPONENTS( ).
+"&---------------------------------------
+"& 6 Assign result table
+"&---------------------------------------
+        FIELD-SYMBOLS <L_FLD> TYPE ANY.
+        DATA L_STR_FLD TYPE CHAR255.
+
+        ASSIGN LR_RESULT->* TO <lt_outtab>.
+
+        READ TABLE <LT_OUTTAB> ASSIGNING <LS_OUTTAB> INDEX 1.
+        IF SY-SUBRC EQ 0.
+          LOOP AT LT_COMP_TAB INTO LS_COMP_FLD.
+            ASSIGN COMPONENT LS_COMP_FLD-NAME OF STRUCTURE <LS_OUTTAB> TO <L_FLD>.
+            WRITE <L_FLD> TO L_STR_FLD.
+            IF LS_ZTMPTB_MAIN_RECORD-ZZREMARK02 IS INITIAL.
+              LS_ZTMPTB_MAIN_RECORD-ZZREMARK02 =  L_STR_FLD.
+            ELSE.
+              CONCATENATE LS_ZTMPTB_MAIN_RECORD-ZZREMARK02 '|' L_STR_FLD
+              INTO LS_ZTMPTB_MAIN_RECORD-ZZREMARK02 SEPARATED BY SPACE .
+            ENDIF.
+          ENDLOOP.
+          CONDENSE LS_ZTMPTB_MAIN_RECORD-ZZREMARK02.
+*          WRITE <LS_OUTTAB> TO LS_ZTMPTB_MAIN_RECORD-ZZREMARK01 .
+          LS_ZTMPTB_MAIN_RECORD-ZZREMARK01 = 'X'.
+        ENDIF.
       ENDIF.
     ENDIF.
     APPEND LS_ZTMPTB_MAIN_RECORD TO LT_ZTMPTB_MAIN_RECORD.
