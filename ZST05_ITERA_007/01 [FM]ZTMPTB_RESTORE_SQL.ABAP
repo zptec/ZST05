@@ -19,15 +19,25 @@ FUNCTION ZTMPTB_RESTORE_SQL.
 "& Sample Input:
 "& SELECT DISTINCT  "ENHNAME" FROM "ENHOBJ" WHERE "OBJ_TYPE" = ? AND "OBJ_NAME" = ? AND "STATE" <> ? AND "ELEMUSAGE" IN ( ? , ? , ? )
 "& CH&4&CLAS&CH&120&CL_PTC_C_ALV                                                                                                            &CH&1&R&CH&4&EXTO&CH&4&RDEF&CH&4&REDO&
+"&
 "& Sample Output:
 "& SELECT DISTINCT "ENHNAME" FROM "ENHOBJ" WHERE "OBJ_TYPE" = 'CLAS' AND "OBJ_NAME" = 'CL_PTC_C_ALV' AND "STATE" <> 'R' AND "ELEMUSAGE" IN ( 'EXTO' , 'RDEF' , 'REDO' )
 "&
+"& ET_VARIABLE_VALUE:
 "& CLAS
 "& CL_PTC_C_ALV
 "& R
 "& EXTO
 "& RDEF
 "& REDO
+"&
+"& ET_KEYS
+"& OBJ_TYPE
+"& OBJ_NAME
+"& STATE
+"& ELEMUSAGE
+"& ELEMUSAGE
+"& ELEMUSAGE
 "&---------------------------------------
 
 "&---------------------------------------
