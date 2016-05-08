@@ -4,7 +4,6 @@ FUNCTION ZTMPTB_TABLE_RELATION .
 *"  TABLES
 *"      IT_MAIN_RECORD_OLD OPTIONAL
 *"      ET_MAIN_RECORD_NEW OPTIONAL
-*"      ET_CELLSOPTIONAL OPTIONAL
 *"----------------------------------------------------------------------
 
 "&---------------------------------------
