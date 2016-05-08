@@ -4,7 +4,7 @@ FUNCTION ZTMPTB_TABLE_RELATION .
 *"  TABLES
 *"      IT_MAIN_RECORD_OLD OPTIONAL
 *"      ET_MAIN_RECORD_NEW OPTIONAL
-*"      ET_CELLS OPTIONAL
+*"      ET_CELLSOPTIONAL OPTIONAL
 *"----------------------------------------------------------------------
 
 "&---------------------------------------
@@ -25,6 +25,8 @@ FUNCTION ZTMPTB_TABLE_RELATION .
         LR_RESULT        TYPE REF TO DATA.
   DATA: L_TABIX TYPE I.
   DATA: L_SUB_TABIX TYPE I.
+  CLEAR: REF_SQL_EXECUTOR, REF_SYSTEM, LT_ZTMPTB_MAIN_RECORD, LS_ZTMPTB_MAIN_RECORD,
+  LT_ZTMPTB_MAIN_RECORD_OLD, LS_ZTMPTB_MAIN_RECORD_OLD, LR_RESULT_DESCR, LR_RESULT.
 "&---------------------------------------
 "& 02 Init SQL_EXECUTOR
 "&---------------------------------------
@@ -131,8 +133,8 @@ FUNCTION ZTMPTB_TABLE_RELATION .
       READ TABLE LT_STATEMENT INTO LS_STATEMENT WITH KEY SOURCE_INDEX = L_TABIX BINARY SEARCH .
       IF SY-SUBRC EQ 0.
         L_SUB_TABIX = SY-SUBRC + 1.
-        TRY.
         "EXECUTE QUERY
+        TRY.
         REF_SQL_EXECUTOR->EXEC_QUERY_DYN( EXPORTING IM_STATEMENT    = LS_STATEMENT-SELECT_SQL
                                                 IM_CURSOR_SIZE  = '1'
                                                 IM_SYSTEM       = REF_SYSTEM
