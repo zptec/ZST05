@@ -1,0 +1,70 @@
+ENHANCEMENT 1  ZTMPTB_I08_2.    "inactive version
+*ZST05 HANDLE DOUBLE CLICK - BORIS TOWN 2016-5-8
+*ENHANCEMENT POINT: BEGIN OF CL_ST05_TRACE_DISPLAY_V_A~HANDLE_DOUBLE_CLICK
+*SYSTEM VERSION: NW 7.5 FOR S4HANA OP 1511
+  "01 LOGIC ONLY FOR TCODE ZST05_NEW 2016-5-8
+  IF SY-TCODE EQ 'ZST05_NEW'.
+    "02 IF CLICKED ZZREMARK01( Query Result ) 2016-5-8
+    IF E_COLUMN-FIELDNAME EQ 'ZZREMARK01'.
+    " 03 STANDARD ORIGINAL CODE 2016-5-8
+    " Handle ALV Grid Event DOUBLE_CLICK.
+      IF (     'TABLE'  =  me->display_properties-name
+           AND 'OBJECT' <> e_column-fieldname ).
+        RETURN.
+      ENDIF.
+
+      "04 get the selected cells from the view 2016-5-8
+      DATA : ZTMPTB_CELL_ID_TABLE  TYPE LVC_T_CELL.
+      ZTMPTB_CELL_ID_TABLE = ME->GET_SELECTED_CELLS( ).
+
+      "05 exclude header row cells 2016-5-8
+      DELETE  ZTMPTB_CELL_ID_TABLE
+        WHERE  ROW_ID-INDEX = '0000000000'.
+
+      "06 Get table for record number 2016-5-8
+      DATA : ZTMPTB_RECORD_NUMBER_TABLE  TYPE PTC_RECORD_NUMBERS.
+      FIELD-SYMBOLS : <ZTMPTB_record_number>  TYPE PTC_RECORD_NUMBER.
+      ZTMPTB_RECORD_NUMBER_TABLE = ME->GET_RECORD_NUMBER_TABLE( ZTMPTB_CELL_ID_TABLE ).
+
+      FIELD-SYMBOLS : <ZTMPTB_RECORD_TAB> TYPE ZTMPTB_MAIN_RECORD_TABLE.
+      FIELD-SYMBOLS : <ZTMPTB_RECORD_LINE> TYPE ZTMPTB_MAIN_RECORD.
+
+      ASSIGN ME->GRID_TABLE_REF->* TO <ZTMPTB_RECORD_TAB>.
+
+       "07 Get selected line 2016-5-8
+       LOOP AT ZTMPTB_RECORD_NUMBER_TABLE
+         ASSIGNING <ZTMPTB_RECORD_NUMBER>.
+         READ TABLE <ZTMPTB_RECORD_TAB> ASSIGNING <ZTMPTB_RECORD_LINE>
+         WITH KEY RECORD_NUMBER = <ZTMPTB_RECORD_NUMBER> BINARY SEARCH.
+         IF SY-SUBRC EQ 0.
+           "08 IF ZZREMARK01 IS NOT INITIAL 2016-5-8
+           IF <ZTMPTB_RECORD_LINE>-ZZREMARK01 IS NOT INITIAL.
+             "09 Get SQL statement 2016-5-8
+             DATA ZTMPTB_SELECT_SQL TYPE STRING.
+             CLEAR ZTMPTB_SELECT_SQL.
+             CALL FUNCTION 'ZTMPTB_RESTORE_SQL'
+              EXPORTING
+                IV_STATEMENT            = <ZTMPTB_RECORD_LINE>-STATEMENT_WITH_NAMES
+                IV_VARIABLES            = <ZTMPTB_RECORD_LINE>-VARIABLES
+              IMPORTING
+                EV_SQL                  = ZTMPTB_SELECT_SQL
+              EXCEPTIONS
+                REMARKS_NOT_MATCH       = 1
+                OTHERS                  = 2
+                      .
+            IF SY-SUBRC EQ 0.
+              "10 Break point for HANDTB to find FULL STAEMENT / ZZREMARK01 MESSAGE 2016-5-8
+              BREAK HANDTB.
+             "11 Import SQL statement to memory 2016-5-8
+              EXPORT P_STATEMTN = ZTMPTB_SELECT_SQL TO MEMORY ID 'ZTMPTB_ZST05_SQL'.
+              "12 Call Transaction 'ZDBACOCKPIT_SQL' 2016-5-8
+              CALL TRANSACTION 'ZDBACOCKPIT_SQL'.
+              "13 Exit function 2016-5-8
+              RETURN.
+            ENDIF.
+           ENDIF.
+         ENDIF.
+       ENDLOOP.
+    ENDIF.
+  ENDIF.
+ENDENHANCEMENT.
