@@ -3,7 +3,7 @@ ENHANCEMENT 1  ZTMPTB_I08_2.    "active version
 *ENHANCEMENT POINT: BEGIN OF CL_ST05_TRACE_DISPLAY_V_A~HANDLE_DOUBLE_CLICK
 *SYSTEM VERSION: NW 7.5 FOR S4HANA OP 1511
   "01 LOGIC ONLY FOR TCODE ZST05_NEW 2016-5-8
-  IF SY-TCODE EQ 'ZST05_NEW'.
+  IF SY-TCODE EQ 'ZST05'.
     "02 IF CLICKED ZZREMARK01( Query Result ) 2016-5-8
     IF E_COLUMN-FIELDNAME EQ 'ZZREMARK01'.
     " 03 STANDARD ORIGINAL CODE 2016-5-8
@@ -64,11 +64,34 @@ ENHANCEMENT 1  ZTMPTB_I08_2.    "active version
                 OTHERS                  = 2
                       .
             IF SY-SUBRC EQ 0.
-             "11 Import SQL statement to memory 2016-5-8
-              EXPORT P_STATEMTN = ZTMPTB_SELECT_SQL TO MEMORY ID 'ZTMPTB_ZST05_SQL'.
-              "12 Call Transaction 'ZDBACOCKPIT_SQL' 2016-5-8
+              "11 Split statment string to string tables
+              DATA ZTMPTB_OUT_LINES TYPE TABLE OF STRING.
+              DATA ZTMPTB_LONGEST_CHAR(65535) TYPE C.
+              ZTMPTB_LONGEST_CHAR = ZTMPTB_SELECT_SQL.
+              CALL FUNCTION 'RKD_WORD_WRAP'
+                EXPORTING
+                  TEXTLINE                  = ZTMPTB_LONGEST_CHAR
+*                 DELIMITER                 = ' '
+                  OUTPUTLEN                 = 255
+*               IMPORTING
+*                 OUT_LINE1                 =
+*                 OUT_LINE2                 =
+*                 OUT_LINE3                 =
+                TABLES
+                  OUT_LINES                 = ZTMPTB_OUT_LINES
+                EXCEPTIONS
+                  OUTPUTLEN_TOO_LARGE       = 1
+                  OTHERS                    = 2
+                        .
+              IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+              ENDIF.
+
+             "12 Import SQL statement to memory 2016-5-8
+              EXPORT P_STATEMTN = ZTMPTB_OUT_LINES TO MEMORY ID 'ZTMPTB_ZST05_SQL'.
+              "13 Call Transaction 'ZDBACOCKPIT_SQL' 2016-5-8
               CALL TRANSACTION 'ZDBACOCKPIT_SQL'.
-              "13 Exit function 2016-5-8
+              "14 Exit function 2016-5-8
               RETURN.
             ENDIF.
            ENDIF.
